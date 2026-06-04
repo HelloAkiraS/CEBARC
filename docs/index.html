@@ -3,301 +3,870 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora CEBARC</title>
+    <title>CEBARC — Calculadora de Corrosão Estrutural</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
     <!-- Pyodide CDN -->
     <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="number"], select { width: 100%; padding: 8px; box-sizing: border-box; }
+
+        /* ─── RESET & BASE ─────────────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:             #e8eaed;
+            --surface:        #ffffff;
+            --surface-alt:    #f3f5f7;
+            --navy:           #1b2b3a;
+            --navy-mid:       #253c52;
+            --navy-border:    rgba(255,255,255,0.08);
+            --steel:          #4b6175;
+            --muted:          #7a8fa0;
+            --border:         #c4cfd8;
+            --border-light:   #dde5eb;
+            --rust:           #b5511a;
+            --rust-mid:       #d0652a;
+            --rust-pale:      #fdf0ea;
+            --rust-border:    #e8a882;
+            --text:           #18263a;
+            --text-sec:       #4b6175;
+            --font-ui:        'Barlow', system-ui, sans-serif;
+            --font-heading:   'Barlow Condensed', 'Barlow', system-ui, sans-serif;
+            --font-mono:      'IBM Plex Mono', 'Courier New', monospace;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: var(--font-ui);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 18px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
         .hidden { display: none !important; }
-        button { padding: 10px 15px; font-size: 16px; cursor: pointer; }
-        #resultado { margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 5px; white-space: pre-wrap; font-family: monospace; }
-        .loading { font-style: italic; color: #555; }
-        .radio-group { display: flex; gap: 15px; }
-        .radio-group label { display: inline-block; font-weight: normal; }
-        .checkbox-label { display: inline-block; font-weight: normal; }
+
+        /* ─── APP SHELL ────────────────────────────────────────── */
+        .app-wrapper {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .app-header {
+            flex-shrink: 0;
+            height: 56px;
+            background: var(--navy);
+            border-bottom: 3px solid var(--rust);
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            padding: 0 1.75rem;
+        }
+
+        .brand {
+            font-family: var(--font-heading);
+            font-size: 1.55rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: #fff;
+            white-space: nowrap;
+        }
+        .brand em {
+            font-style: normal;
+            color: var(--rust-mid);
+        }
+
+        .header-sep {
+            width: 1px;
+            height: 28px;
+            background: rgba(255,255,255,0.18);
+            flex-shrink: 0;
+        }
+
+        .app-header .subtitle {
+            font-size: 0.73rem;
+            color: rgba(255,255,255,0.5);
+            font-weight: 400;
+            line-height: 1.45;
+            letter-spacing: 0.01em;
+        }
+
+        .header-badge {
+            margin-left: auto;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.3);
+            letter-spacing: 0.06em;
+            white-space: nowrap;
+        }
+
+        /* Main split */
+        .app-main {
+            flex: 1;
+            min-height: 0;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+        }
+
+        /* ─── LEFT PANEL (FORM) ────────────────────────────────── */
+        .panel-form {
+            overflow-y: auto;
+            background: var(--bg);
+            padding: 1.5rem 1.75rem 2rem;
+            border-right: 1px solid var(--border);
+        }
+
+        .panel-label {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-family: var(--font-heading);
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 1.1rem;
+        }
+        .panel-label::before {
+            content: '';
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: var(--rust);
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        }
+
+        /* ─── CARDS ────────────────────────────────────────────── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-top: 2px solid var(--border);
+            padding: 1rem 1.125rem 1.125rem;
+            margin-bottom: 0.65rem;
+        }
+        .card:first-of-type { border-top-color: var(--rust); }
+
+        .card-title {
+            font-family: var(--font-heading);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+            color: var(--rust);
+            margin-bottom: 0.85rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .card-title .card-num {
+            font-size: 0.6rem;
+            font-family: var(--font-mono);
+            color: var(--muted);
+            border: 1px solid var(--border);
+            padding: 1px 5px;
+            border-radius: 2px;
+            margin-left: auto;
+        }
+
+        /* ─── FORM ELEMENTS ────────────────────────────────────── */
+        .form-group { margin-bottom: 0.75rem; }
+        .form-group:last-child { margin-bottom: 0; }
+
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.65rem;
+        }
+        .form-grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.65rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.73rem;
+            font-weight: 500;
+            color: var(--text-sec);
+            margin-bottom: 4px;
+            letter-spacing: 0.01em;
+        }
+        label .unit {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--muted);
+            font-weight: 400;
+        }
+
+        input[type="number"],
+        input[type="text"],
+        select {
+            width: 100%;
+            height: 34px;
+            padding: 0 9px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            background: var(--surface-alt);
+            border: 1px solid var(--border);
+            color: var(--text);
+            outline: none;
+            border-radius: 0;
+            -webkit-appearance: none;
+            transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+        }
+
+        input[type="number"]:focus,
+        input[type="text"]:focus,
+        select:focus {
+            border-color: var(--rust);
+            background: var(--surface);
+            box-shadow: 0 0 0 3px rgba(181, 81, 26, 0.1);
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+        }
+
+        select {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%234b6175' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 28px;
+            cursor: pointer;
+        }
+
+        /* Checkbox */
+        .checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            font-weight: 400;
+            color: var(--text);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        input[type="checkbox"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border: 1.5px solid var(--border);
+            background: var(--surface-alt);
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        input[type="checkbox"]:checked {
+            background: var(--rust);
+            border-color: var(--rust);
+        }
+        input[type="checkbox"]:checked::after {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 1px;
+            width: 5px;
+            height: 9px;
+            border: 2px solid #fff;
+            border-top: none;
+            border-left: none;
+            transform: rotate(45deg);
+        }
+
+        /* Radio toggle pills */
+        .radio-group {
+            display: flex;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .radio-group label {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 34px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            font-family: var(--font-ui);
+            color: var(--text-sec);
+            background: var(--surface-alt);
+            cursor: pointer;
+            border-right: 1px solid var(--border);
+            margin-bottom: 0;
+            letter-spacing: 0.02em;
+            transition: background 0.15s, color 0.15s;
+        }
+        .radio-group label:last-child { border-right: none; }
+        .radio-group input[type="radio"] { display: none; }
+        .radio-group label:has(input[type="radio"]:checked) {
+            background: var(--rust);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        /* Conditional sub-group */
+        .conditional-group {
+            margin-top: 0.65rem;
+            padding: 0.875rem 0.875rem 0.875rem 1rem;
+            background: var(--rust-pale);
+            border: 1px solid var(--rust-border);
+            border-left: 3px solid var(--rust);
+        }
+        .conditional-group .form-group:last-child { margin-bottom: 0; }
+        .conditional-group label { color: #6b3a22; }
+
+        /* Submit */
+        .submit-area { margin-top: 0.5rem; }
+
+        #btnCalcular {
+            width: 100%;
+            height: 44px;
+            font-family: var(--font-heading);
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            background: var(--navy);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        #btnCalcular:hover  { background: var(--navy-mid); }
+        #btnCalcular:active { background: #0f1c27; }
+        #btnCalcular:disabled {
+            background: var(--steel);
+            cursor: not-allowed;
+            opacity: 0.75;
+        }
+
+        /* ─── RIGHT PANEL (RESULTS) ────────────────────────────── */
+        .panel-result {
+            display: flex;
+            flex-direction: column;
+            background: var(--navy);
+            overflow-y: auto;
+        }
+
+        .panel-result-header {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.9rem 1.5rem;
+            border-bottom: 1px solid var(--navy-border);
+            font-family: var(--font-heading);
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
+        }
+        .panel-result-header::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--rust);
+        }
+
+        .result-panel-body {
+            flex: 1;
+            position: relative;
+            padding: 1.5rem;
+        }
+
+        /* Loading state */
+        #status {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.45);
+            font-style: italic;
+            padding: 0.25rem 0;
+        }
+
+        .loader-dots {
+            display: flex;
+            gap: 4px;
+        }
+        .loader-dots span {
+            display: block;
+            width: 6px;
+            height: 6px;
+            background: var(--rust-mid);
+            border-radius: 50%;
+            animation: dotpulse 1.4s ease-in-out infinite;
+        }
+        .loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dotpulse {
+            0%, 80%, 100% { opacity: 0.25; transform: scale(0.75); }
+            40%            { opacity: 1;    transform: scale(1); }
+        }
+
+        /* Empty state */
+        .result-empty {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.25rem;
+            padding: 2.5rem;
+            pointer-events: none;
+            text-align: center;
+            color: rgba(255,255,255,0.18);
+        }
+
+        .result-empty-glyph {
+            font-family: var(--font-mono);
+            font-size: 2.8rem;
+            line-height: 1;
+            opacity: 0.6;
+        }
+        .result-empty p {
+            font-size: 0.78rem;
+            line-height: 1.7;
+            max-width: 240px;
+        }
+
+        /* Hide empty state once resultado is visible */
+        .result-panel-body:has(#resultado:not(.hidden)) .result-empty {
+            opacity: 0;
+        }
+
+        /* Result output block */
+        #resultado {
+            position: relative;
+            z-index: 1;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            line-height: 1.75;
+            color: rgba(255, 255, 255, 0.88);
+            white-space: pre;
+            background: rgba(0, 0, 0, 0.28);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-left: 3px solid var(--rust);
+            padding: 1.25rem 1.125rem;
+        }
+
+        /* ─── RESPONSIVE ───────────────────────────────────────── */
+        @media (max-width: 860px) {
+            .app-main {
+                grid-template-columns: 1fr;
+                overflow: visible;
+            }
+            .panel-form {
+                overflow-y: visible;
+                padding: 1.25rem;
+            }
+            .panel-result {
+                min-height: 300px;
+                border-top: 3px solid var(--rust);
+            }
+            .app-header .subtitle,
+            .header-badge { display: none; }
+            .app-header { padding: 0 1.25rem; }
+            .result-panel-body { padding: 1.25rem; }
+            .form-grid-3 { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 480px) {
+            .form-grid-2,
+            .form-grid-3 { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
-    <h1>Calculadora CEBARC</h1>
-    
-    <div id="status" class="loading">Carregando Pyodide... aguarde.</div>
 
-    <form id="calcForm" class="hidden">
-        <!-- Tempo de corrosão -->
-        <div class="form-group">
-            <label for="t">Tempo de corrosão (Anos)</label>
-            <input type="number" id="t" name="t" step="any" required>
-        </div>
-        
-        <!-- Perfil resistente a corrosão? -->
-        <div class="form-group">
-            <label class="checkbox-label">
-                <input type="checkbox" id="resistente" name="resistente" checked>
-                Perfil é resistente a corrosão?
-            </label>
-        </div>
+<div class="app-wrapper">
 
-        <!-- Gama a1 e Gama a2 -->
-        <div class="form-group">
-            <label for="ya1">Gama a1</label>
-            <input type="number" id="ya1" name="ya1" step="any" value="1.1" required>
+    <!-- ═══ HEADER ═══════════════════════════════════════════════ -->
+    <header class="app-header">
+        <div class="brand">CEB<em>ARC</em></div>
+        <div class="header-sep"></div>
+        <div class="subtitle">
+            Análise da Perda de Resistência em Barras Tracionadas Axialmente<br>
+            Corrosão por Perda de Seção Transversal
         </div>
-        <div class="form-group">
-            <label for="ya2">Gama a2</label>
-            <input type="number" id="ya2" name="ya2" step="any" value="1.35" required>
-        </div>
+        <div class="header-badge">PYODIDE&nbsp;0.25 &nbsp;·&nbsp; ABNT&nbsp;NBR&nbsp;8800</div>
+    </header>
 
-        <!-- Tensões -->
-        <div class="form-group">
-            <label for="fy">Tensão de Escoamento (KN/cm²)</label>
-            <input type="number" id="fy" name="fy" step="any" required>
-        </div>
-        <div class="form-group">
-            <label for="fu">Tensão última (KN/cm²)</label>
-            <input type="number" id="fu" name="fu" step="any" required>
-        </div>
+    <!-- ═══ MAIN SPLIT ════════════════════════════════════════════ -->
+    <main class="app-main">
 
-        <!-- Comprimento L -->
-        <div class="form-group">
-            <label for="L">Comprimento da Barra (cm)</label>
-            <input type="number" id="L" name="L" step="any" required>
-        </div>
+        <!-- ── LEFT: FORM ──────────────────────────────────────── -->
+        <section class="panel-form">
 
-        <!-- Características da Ligação -->
-        <div class="form-group">
-            <label for="caracteristicasDeLigacao">Escolha a característica de ligação:</label>
-            <select id="caracteristicasDeLigacao" name="caracteristicasDeLigacao" required>
-                <option value="1">a - Descrição respectiva</option>
-                <option value="2">b - Descrição respectiva</option>
-                <option value="3">c - Descrição respectiva</option>
-                <option value="4">d - Descrição respectiva</option>
-                <option value="5">e - Descrição respectiva</option>
-                <option value="6">f - Descrição respectiva</option>
-            </select>
-        </div>
+            <div class="panel-label">Parâmetros de Entrada</div>
 
-        <!-- Grupo 4: Visível apenas se caracteristicasDeLigacao == 4 -->
-        <div id="groupLigacao4" class="hidden">
-            <div class="form-group">
-                <label for="Ac">Área da seção transversal dos elementos conectados (cm)</label>
-                <input type="number" id="Ac" name="Ac" step="any">
+            <form id="calcForm" class="hidden" novalidate>
+
+                <!-- CARD 1 — Análise Temporal -->
+                <div class="card">
+                    <div class="card-title">Análise Temporal <span class="card-num">01</span></div>
+
+                    <div class="form-group">
+                        <label for="t">Tempo de corrosão <span class="unit">(anos)</span></label>
+                        <input type="number" id="t" name="t" step="any" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="resistente" name="resistente" checked>
+                            Perfil é resistente à corrosão
+                        </label>
+                    </div>
+                </div>
+
+                <!-- CARD 2 — Coeficientes de Ponderação -->
+                <div class="card">
+                    <div class="card-title">Coeficientes de Ponderação <span class="card-num">02</span></div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="ya1">γ<sub>a1</sub></label>
+                            <input type="number" id="ya1" name="ya1" step="any" value="1.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="ya2">γ<sub>a2</sub></label>
+                            <input type="number" id="ya2" name="ya2" step="any" value="1.35" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 3 — Propriedades do Material -->
+                <div class="card">
+                    <div class="card-title">Propriedades do Material <span class="card-num">03</span></div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="fy">Tensão de escoamento f<sub>y</sub> <span class="unit">(kN/cm²)</span></label>
+                            <input type="number" id="fy" name="fy" step="any" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fu">Tensão última f<sub>u</sub> <span class="unit">(kN/cm²)</span></label>
+                            <input type="number" id="fu" name="fu" step="any" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 4 — Geometria da Barra -->
+                <div class="card">
+                    <div class="card-title">Geometria da Barra <span class="card-num">04</span></div>
+
+                    <div class="form-group">
+                        <label for="L">Comprimento da barra <span class="unit">(cm)</span></label>
+                        <input type="number" id="L" name="L" step="any" required>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="tw">Espessura da alma t<sub>w</sub> <span class="unit">(cm)</span></label>
+                            <input type="number" id="tw" name="tw" step="any" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tf">Espessura da mesa t<sub>f</sub> <span class="unit">(cm)</span></label>
+                            <input type="number" id="tf" name="tf" step="any" required>
+                        </div>
+                    </div>
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label for="bf">Largura da mesa b<sub>f</sub> <span class="unit">(cm)</span></label>
+                            <input type="number" id="bf" name="bf" step="any" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="h">Altura interna da alma h <span class="unit">(cm)</span></label>
+                            <input type="number" id="h" name="h" step="any" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="lc">Comp. efetivo ligação l<sub>c</sub> <span class="unit">(cm)</span></label>
+                            <input type="number" id="lc" name="lc" step="any" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 5 — Características da Ligação -->
+                <div class="card">
+                    <div class="card-title">Características da Ligação <span class="card-num">05</span></div>
+
+                    <div class="form-group">
+                        <label for="caracteristicasDeLigacao">Caso da ligação</label>
+                        <select id="caracteristicasDeLigacao" name="caracteristicasDeLigacao" required>
+                            <option value="1">a — Descrição respectiva</option>
+                            <option value="2">b — Descrição respectiva</option>
+                            <option value="3">c — Descrição respectiva</option>
+                            <option value="4">d — Descrição respectiva</option>
+                            <option value="5">e — Descrição respectiva</option>
+                            <option value="6">f — Descrição respectiva</option>
+                        </select>
+                    </div>
+
+                    <!-- Visible only when case == 4 -->
+                    <div id="groupLigacao4" class="hidden">
+                        <div class="conditional-group">
+                            <div class="form-grid-2">
+                                <div class="form-group">
+                                    <label for="Ac">Área elem. conectados A<sub>c</sub> <span class="unit">(cm²)</span></label>
+                                    <input type="number" id="Ac" name="Ac" step="any">
+                                </div>
+                                <div class="form-group">
+                                    <label for="b">Largura da chapa b <span class="unit">(cm)</span></label>
+                                    <input type="number" id="b" name="b" step="any">
+                                </div>
+                            </div>
+                            <div class="form-grid-2">
+                                <div class="form-group">
+                                    <label for="Lw">Comp. cordões de solda L<sub>w</sub> <span class="unit">(cm)</span></label>
+                                    <input type="number" id="Lw" name="Lw" step="any">
+                                </div>
+                                <div class="form-group">
+                                    <label for="DExt">Diâmetro externo D<sub>ext</sub> <span class="unit">(cm)</span></label>
+                                    <input type="number" id="DExt" name="DExt" step="any">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 6 — Tipo de Ligação -->
+                <div class="card">
+                    <div class="card-title">Tipo de Ligação <span class="card-num">06</span></div>
+
+                    <div class="form-group">
+                        <label style="margin-bottom:6px;">Ligação usa parafuso ou solda?</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="parafuso" value="true" checked> Parafuso</label>
+                            <label><input type="radio" name="parafuso" value="false"> Solda</label>
+                        </div>
+                    </div>
+
+                    <!-- Visible when parafuso == true -->
+                    <div id="groupParafuso">
+                        <div class="conditional-group">
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="broca" name="broca" checked>
+                                    Usa broca?
+                                </label>
+                            </div>
+                            <div class="form-grid-2">
+                                <div class="form-group">
+                                    <label for="dp">Diâmetro dos parafusos d<sub>p</sub> <span class="unit">(cm)</span></label>
+                                    <input type="number" id="dp" name="dp" step="any">
+                                </div>
+                                <div class="form-group">
+                                    <label for="npa">N.º parafusos alinhados n<sub>pa</sub></label>
+                                    <input type="number" id="npa" name="npa" step="any">
+                                </div>
+                            </div>
+                            <div class="form-grid-3">
+                                <div class="form-group">
+                                    <label for="nlpd">Linhas em diagonal n<sub>lpd</sub></label>
+                                    <input type="number" id="nlpd" name="nlpd" step="any">
+                                </div>
+                                <div class="form-group">
+                                    <label for="s">Esp. longitudinal s <span class="unit">(cm)</span></label>
+                                    <input type="number" id="s" name="s" step="any">
+                                </div>
+                                <div class="form-group">
+                                    <label for="g">Esp. transversal g <span class="unit">(cm)</span></label>
+                                    <input type="number" id="g" name="g" step="any">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 7 — Localização da Ligação -->
+                <div class="card">
+                    <div class="card-title">Localização da Ligação <span class="card-num">07</span></div>
+
+                    <div class="form-group">
+                        <label style="margin-bottom:6px;">Ligação ocorre na alma ou mesa?</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="alma" value="true" checked> Alma</label>
+                            <label><input type="radio" name="alma" value="false"> Mesa</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="submit-area">
+                    <button type="submit" id="btnCalcular">Calcular</button>
+                </div>
+
+            </form>
+        </section>
+
+        <!-- ── RIGHT: RESULTS ──────────────────────────────────── -->
+        <section class="panel-result">
+
+            <div class="panel-result-header">Output</div>
+
+            <div class="result-panel-body">
+
+                <!-- Loading indicator -->
+                <div id="status" class="loading">
+                    <span class="loader-dots">
+                        <span></span><span></span><span></span>
+                    </span>
+                    Inicializando ambiente Python (Pyodide)...
+                </div>
+
+                <!-- Empty state -->
+                <div class="result-empty">
+                    <div class="result-empty-glyph">⊕</div>
+                    <p>Preencha os parâmetros no painel ao lado e clique em <strong>Calcular</strong> para exibir os resultados aqui.</p>
+                </div>
+
+                <!-- Computed output -->
+                <div id="resultado" class="hidden"></div>
+
             </div>
-            <div class="form-group">
-                <label for="b">Largura da chapa (cm)</label>
-                <input type="number" id="b" name="b" step="any">
-            </div>
-            <div class="form-group">
-                <label for="Lw">Comprimento dos cordões de solda (cm)</label>
-                <input type="number" id="Lw" name="Lw" step="any">
-            </div>
-            <div class="form-group">
-                <label for="DExt">Diâmetro externo da barra (cm)</label>
-                <input type="number" id="DExt" name="DExt" step="any">
-            </div>
-        </div>
+        </section>
 
-        <!-- Parafuso ou Solda -->
-        <div class="form-group">
-            <label>Ligação usa parafuso ou solda?</label>
-            <div class="radio-group">
-                <label><input type="radio" name="parafuso" value="true" checked> Parafuso</label>
-                <label><input type="radio" name="parafuso" value="false"> Solda</label>
-            </div>
-        </div>
+    </main>
+</div>
 
-        <!-- Grupo Parafuso: Visível apenas se parafuso == true -->
-        <div id="groupParafuso">
-            <div class="form-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="broca" name="broca" checked>
-                    Usa broca?
-                </label>
-            </div>
-            <div class="form-group">
-                <label for="dp">Diâmetro dos parafusos (cm)</label>
-                <input type="number" id="dp" name="dp" step="any">
-            </div>
-            <div class="form-group">
-                <label for="npa">Número de parafusos alinhados para análise</label>
-                <input type="number" id="npa" name="npa" step="any">
-            </div>
-            <div class="form-group">
-                <label for="nlpd">Número de linhas de parafusos em diagonal</label>
-                <input type="number" id="nlpd" name="nlpd" step="any">
-            </div>
-            <div class="form-group">
-                <label for="s">Espaçamento longitudinal dos parafusos (cm)</label>
-                <input type="number" id="s" name="s" step="any">
-            </div>
-            <div class="form-group">
-                <label for="g">Espaçamento transversal dos parafusos (cm)</label>
-                <input type="number" id="g" name="g" step="any">
-            </div>
-        </div>
 
-        <!-- Espessuras -->
-        <div class="form-group">
-            <label for="tw">Espessura da alma (cm)</label>
-            <input type="number" id="tw" name="tw" step="any" required>
-        </div>
-        <div class="form-group">
-            <label for="tf">Espessura da mesa (cm)</label>
-            <input type="number" id="tf" name="tf" step="any" required>
-        </div>
+<!-- ═══ ORIGINAL JAVASCRIPT (não alterado) ════════════════════ -->
+<script>
+    let pyodideInstance = null;
 
-        <!-- Alma ou Mesa -->
-        <div class="form-group">
-            <label>Ligação ocorre na alma ou mesa?</label>
-            <div class="radio-group">
-                <label><input type="radio" name="alma" value="true" checked> Alma</label>
-                <label><input type="radio" name="alma" value="false"> Mesa</label>
-            </div>
-        </div>
+    // Lógica condicional de exibição (Características da Ligação)
+    const caracteristicasDeLigacao = document.getElementById('caracteristicasDeLigacao');
+    const groupLigacao4 = document.getElementById('groupLigacao4');
+    const req4 = ['Ac', 'b', 'Lw', 'DExt'];
 
-        <!-- Propriedades adicionais -->
-        <div class="form-group">
-            <label for="bf">Largura da mesa (cm)</label>
-            <input type="number" id="bf" name="bf" step="any" required>
-        </div>
-        <div class="form-group">
-            <label for="h">Altura interna da alma (cm)</label>
-            <input type="number" id="h" name="h" step="any" required>
-        </div>
-        <div class="form-group">
-            <label for="lc">Comprimento efetivo da ligação na direção da força axial (cm)</label>
-            <input type="number" id="lc" name="lc" step="any" required>
-        </div>
+    caracteristicasDeLigacao.addEventListener('change', (e) => {
+        if (e.target.value === '4') {
+            groupLigacao4.classList.remove('hidden');
+            req4.forEach(id => document.getElementById(id).required = true);
+        } else {
+            groupLigacao4.classList.add('hidden');
+            req4.forEach(id => document.getElementById(id).required = false);
+        }
+    });
 
-        <button type="submit" id="btnCalcular">Calcular</button>
-    </form>
+    // Lógica condicional de exibição (Parafuso ou Solda)
+    const radiosParafuso = document.getElementsByName('parafuso');
+    const groupParafuso = document.getElementById('groupParafuso');
+    const reqParafuso = ['dp', 'npa', 'nlpd', 's', 'g'];
 
-    <div id="resultado" class="hidden"></div>
-
-    <script>
-        let pyodideInstance = null;
-
-        // Lógica condicional de exibição (Características da Ligação)
-        const caracteristicasDeLigacao = document.getElementById('caracteristicasDeLigacao');
-        const groupLigacao4 = document.getElementById('groupLigacao4');
-        const req4 = ['Ac', 'b', 'Lw', 'DExt'];
-
-        caracteristicasDeLigacao.addEventListener('change', (e) => {
-            if (e.target.value === '4') {
-                groupLigacao4.classList.remove('hidden');
-                req4.forEach(id => document.getElementById(id).required = true);
+    for (let radio of radiosParafuso) {
+        radio.addEventListener('change', (e) => {
+            if (e.target.value === 'true') {
+                groupParafuso.classList.remove('hidden');
+                reqParafuso.forEach(id => document.getElementById(id).required = true);
             } else {
-                groupLigacao4.classList.add('hidden');
-                req4.forEach(id => document.getElementById(id).required = false);
+                groupParafuso.classList.add('hidden');
+                reqParafuso.forEach(id => document.getElementById(id).required = false);
             }
         });
+    }
 
-        // Lógica condicional de exibição (Parafuso ou Solda)
-        const radiosParafuso = document.getElementsByName('parafuso');
-        const groupParafuso = document.getElementById('groupParafuso');
-        const reqParafuso = ['dp', 'npa', 'nlpd', 's', 'g'];
+    // Estado inicial de obrigatoriedade dos campos
+    reqParafuso.forEach(id => document.getElementById(id).required = true);
 
-        for (let radio of radiosParafuso) {
-            radio.addEventListener('change', (e) => {
-                if (e.target.value === 'true') {
-                    groupParafuso.classList.remove('hidden');
-                    reqParafuso.forEach(id => document.getElementById(id).required = true);
-                } else {
-                    groupParafuso.classList.add('hidden');
-                    reqParafuso.forEach(id => document.getElementById(id).required = false);
-                }
-            });
-        }
-        
-        // Estado inicial de obrigatoriedade dos campos
-        reqParafuso.forEach(id => document.getElementById(id).required = true);
-        
-        // Inicializar Pyodide e carregar algorithm.py
-        async function init() {
-            try {
-                let pyodide = await loadPyodide();
-                
-                // Buscar código do algorithm.py
-                const response = await fetch('algorithm.py');
-                if (!response.ok) {
-                    throw new Error("algorithm.py não encontrado. Status: " + response.status);
-                }
-                let algoCode = await response.text();
-                
-                // Executar o script Python para carregar as funções
-                // Substituímos o if __main__ para evitar que o Python tente ler do sys.stdin no navegador
-                algoCode = algoCode.replace("if __name__ == '__main__':", "if False:");
-                await pyodide.runPythonAsync(algoCode);
-                
-                pyodideInstance = pyodide;
-                document.getElementById('status').classList.add('hidden');
-                document.getElementById('calcForm').classList.remove('hidden');
-            } catch (err) {
-                document.getElementById('status').innerText = 'Erro ao carregar o Pyodide ou o script Python: ' + err.message;
-                console.error(err);
+    // Inicializar Pyodide e carregar algorithm.py
+    async function init() {
+        try {
+            let pyodide = await loadPyodide();
+
+            // Buscar código do algorithm.py
+            const response = await fetch('algorithm.py');
+            if (!response.ok) {
+                throw new Error("algorithm.py não encontrado. Status: " + response.status);
             }
+            let algoCode = await response.text();
+
+            // Executar o script Python para carregar as funções
+            // Substituímos o if __main__ para evitar que o Python tente ler do sys.stdin no navegador
+            algoCode = algoCode.replace("if __name__ == '__main__':", "if False:");
+            await pyodide.runPythonAsync(algoCode);
+
+            pyodideInstance = pyodide;
+            document.getElementById('status').classList.add('hidden');
+            document.getElementById('calcForm').classList.remove('hidden');
+        } catch (err) {
+            document.getElementById('status').innerText = 'Erro ao carregar o Pyodide ou o script Python: ' + err.message;
+            console.error(err);
         }
+    }
 
-        init();
+    init();
 
-        // Submissão do formulário
-        document.getElementById('calcForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const btn = document.getElementById('btnCalcular');
-            btn.disabled = true;
-            btn.innerText = 'Calculando...';
+    // Submissão do formulário
+    document.getElementById('calcForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-            const form = e.target;
-            
-            // Função auxiliar para capturar números ou null
-            const num = (id) => {
-                const val = form[id].value;
-                return val !== '' ? parseFloat(val) : null;
-            };
+        const btn = document.getElementById('btnCalcular');
+        btn.disabled = true;
+        btn.innerText = 'Calculando...';
 
-            const isParafuso = form.elements['parafuso'].value === 'true';
-            const charLigacao = parseInt(form.elements['caracteristicasDeLigacao'].value);
+        const form = e.target;
 
-            // Montar objeto de parâmetros compatível com o IRespostas do wizard.ts
-            // Também adicionamos keys em minúsculo/maiúsculo como contorno (fallback) para possíveis
-            // keys no algorithm.py original que divergem do types.ts
-            const params = {
-                t: num('t'),
-                resistente: document.getElementById('resistente').checked,
-                ya1: num('ya1'),
-                ya2: num('ya2'),
-                fy: num('fy'),
-                fu: num('fu'),
-                L: num('L'),
-                caracteristicasDeLigacao: charLigacao,
-                Ac: charLigacao === 4 ? num('Ac') : null,
-                ac: charLigacao === 4 ? num('Ac') : null, // Fallback para algoritmo.py
-                b: charLigacao === 4 ? num('b') : null,
-                Lw: charLigacao === 4 ? num('Lw') : null,
-                DExt: charLigacao === 4 ? num('DExt') : null,
-                parafuso: isParafuso,
-                broca: isParafuso ? document.getElementById('broca').checked : null,
-                dp: isParafuso ? num('dp') : 0,
-                npa: isParafuso ? num('npa') : 0,
-                nlpd: isParafuso ? num('nlpd') : 0,
-                s: isParafuso ? num('s') : 0,
-                g: isParafuso ? num('g') : 0,
-                tw: num('tw'),
-                tf: num('tf'),
-                alma: form.elements['alma'].value === 'true',
-                bf: num('bf'),
-                h: num('h'),
-                lc: num('lc'),
-                Lc: num('lc') // Fallback para algoritmo.py
-            };
+        // Função auxiliar para capturar números ou null
+        const num = (id) => {
+            const val = form[id].value;
+            return val !== '' ? parseFloat(val) : null;
+        };
 
-            try {
-                // Passar parâmetros para o ambiente Python e executar
-                pyodideInstance.globals.set("js_params", params);
-                const pyResult = await pyodideInstance.runPythonAsync(`
+        const isParafuso = form.elements['parafuso'].value === 'true';
+        const charLigacao = parseInt(form.elements['caracteristicasDeLigacao'].value);
+
+        // Montar objeto de parâmetros compatível com o IRespostas do wizard.ts
+        // Também adicionamos keys em minúsculo/maiúsculo como contorno (fallback) para possíveis
+        // keys no algorithm.py original que divergem do types.ts
+        const params = {
+            t: num('t'),
+            resistente: document.getElementById('resistente').checked,
+            ya1: num('ya1'),
+            ya2: num('ya2'),
+            fy: num('fy'),
+            fu: num('fu'),
+            L: num('L'),
+            caracteristicasDeLigacao: charLigacao,
+            Ac: charLigacao === 4 ? num('Ac') : null,
+            ac: charLigacao === 4 ? num('Ac') : null, // Fallback para algoritmo.py
+            b: charLigacao === 4 ? num('b') : null,
+            Lw: charLigacao === 4 ? num('Lw') : null,
+            DExt: charLigacao === 4 ? num('DExt') : null,
+            parafuso: isParafuso,
+            broca: isParafuso ? document.getElementById('broca').checked : null,
+            dp: isParafuso ? num('dp') : 0,
+            npa: isParafuso ? num('npa') : 0,
+            nlpd: isParafuso ? num('nlpd') : 0,
+            s: isParafuso ? num('s') : 0,
+            g: isParafuso ? num('g') : 0,
+            tw: num('tw'),
+            tf: num('tf'),
+            alma: form.elements['alma'].value === 'true',
+            bf: num('bf'),
+            h: num('h'),
+            lc: num('lc'),
+            Lc: num('lc') // Fallback para algoritmo.py
+        };
+
+        try {
+            // Passar parâmetros para o ambiente Python e executar
+            pyodideInstance.globals.set("js_params", params);
+            const pyResult = await pyodideInstance.runPythonAsync(`
 import js
 import json
 
@@ -309,51 +878,52 @@ resultado = calculadora(params_dict)
 
 # Retornar como JSON string
 json.dumps(resultado)
-                `);
+            `);
 
-                const result = JSON.parse(pyResult);
-                mostrarResultado(result, params.t);
-            } catch (err) {
-                console.error(err);
-                 alert('Erro no cálculo Python:\n' + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerText = 'Calcular';
-            }
-        });
-
-        // Função para formatar a saída de forma semelhante ao index.ts original
-        function mostrarResultado(res, tempo) {
-            const t0 = res.t0;
-            const tN = res.tN;
-            const div = document.getElementById('resultado');
-            div.classList.remove('hidden');
-
-            const linha = '─'.repeat(52);
-            let texto = "📊 Resultado:\n\n";
-            
-            texto += "   " + linha + "\n";
-            texto += "   Sem corrosão (t = 0)\n";
-            texto += "   " + linha + "\n";
-            texto += "   ELU:  " + t0.ELU.toFixed(2) + " kN\n";
-            texto += "   ELS:  " + t0.ELS.toFixed(2) + "\n";
-            if (t0.ELS > 300) texto += "  ⚠️  ELS excede o limite de 300.\n";
-
-            texto += "\n   " + linha + "\n";
-            texto += "   Com corrosão (t = " + tempo + " anos)\n";
-            texto += "   " + linha + "\n";
-            texto += "   ELU:  " + tN.ELU.toFixed(2) + " kN\n";
-            texto += "   ELS:  " + tN.ELS.toFixed(2) + "\n";
-            if (tN.ELS > 300) texto += "  ⚠️  ELS excede o limite de 300.\n";
-
-            texto += "\n   " + linha + "\n";
-            texto += "   Variação do ELU\n";
-            texto += "   " + linha + "\n";
-            texto += "   Δ  ELU:  " + res.delta.toFixed(2) + " kN\n";
-            texto += "   Δ% ELU:  " + res.delta_porcentagem.toFixed(2) + " %\n";
-
-            div.innerText = texto;
+            const result = JSON.parse(pyResult);
+            mostrarResultado(result, params.t);
+        } catch (err) {
+            console.error(err);
+            alert('Erro no cálculo Python:\n' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'Calcular';
         }
-    </script>
+    });
+
+    // Função para formatar a saída de forma semelhante ao index.ts original
+    function mostrarResultado(res, tempo) {
+        const t0 = res.t0;
+        const tN = res.tN;
+        const div = document.getElementById('resultado');
+        div.classList.remove('hidden');
+
+        const linha = '─'.repeat(52);
+        let texto = "📊 Resultado:\n\n";
+
+        texto += "   " + linha + "\n";
+        texto += "   Sem corrosão (t = 0)\n";
+        texto += "   " + linha + "\n";
+        texto += "   ELU:  " + t0.ELU.toFixed(2) + " kN\n";
+        texto += "   ELS:  " + t0.ELS.toFixed(2) + "\n";
+        if (t0.ELS > 300) texto += "  ⚠️  ELS excede o limite de 300.\n";
+
+        texto += "\n   " + linha + "\n";
+        texto += "   Com corrosão (t = " + tempo + " anos)\n";
+        texto += "   " + linha + "\n";
+        texto += "   ELU:  " + tN.ELU.toFixed(2) + " kN\n";
+        texto += "   ELS:  " + tN.ELS.toFixed(2) + "\n";
+        if (tN.ELS > 300) texto += "  ⚠️  ELS excede o limite de 300.\n";
+
+        texto += "\n   " + linha + "\n";
+        texto += "   Variação do ELU\n";
+        texto += "   " + linha + "\n";
+        texto += "   Δ  ELU:  " + res.delta.toFixed(2) + " kN\n";
+        texto += "   Δ% ELU:  " + res.delta_porcentagem.toFixed(2) + " %\n";
+
+        div.innerText = texto;
+    }
+</script>
+
 </body>
 </html>
