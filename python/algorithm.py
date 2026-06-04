@@ -3,6 +3,7 @@ import json
 import math
 
 
+
 def calc_ag(p: dict) -> float:
     return (p['tf'] * p['bf'] * 2) + (p['h'] * p['tw'])
 
@@ -73,22 +74,18 @@ def calc_ct(p: dict, ag: float, ec: float) -> float:
         return 1.0
 
     if caso == 2:
-        return p['Ac'] / ag
+        return p['ac'] / ag
 
     if caso == 3:
-        return ec / p['lc']
+        return 1 - (ec / p['lc'])
 
     if caso == 4:
-        lw, b = p['Lw'], p['b']
-        if lw >= 2 * b:       return 1.0
-        if lw >= 1.5 * b:     return 0.87
-        if lw >= b:           return 0.75
-        raise ValueError('Lw não pode ser menor que b')
+        numerador = 3 * (p['lc'] ** 2)
+        denominador = numerador + (p['b'] ** 2)
+        return (numerador / denominador) * (1 - (p['t'] / 2 * p['Lc']))
 
     if caso in (5, 6):
-        if p['lc'] >= 1.30 * p['Dext']:
-            return 1.0
-        return max(0.6, min(0.9, 1 - (ec / p['lc'])))
+        return (1 + ((p['ec'] / p['lc']) ** (3.2))) ** (-10)
 
     return 0.0
 
@@ -97,15 +94,7 @@ def calc_els(L: float, r: float) -> float:
     return L / r
 
 
-def calc_perda(t: float, resistente: bool) -> float:
-    if t == 0:
-        return 0.0
-    raw = (0.07 * math.log10(t) * 0.0213) if resistente \
-        else (0.2538 * math.log10(t) * 0.0202)
-    return raw / 100
-
-
-def calculadora(p: dict) -> dict:
+def _executar(p: dict) -> dict:
     ag   = calc_ag(p)
     ly   = calc_ly(p)
     r    = calc_r(ly, ag)
@@ -119,6 +108,30 @@ def calculadora(p: dict) -> dict:
     els  = calc_els(p['L'], r)
 
     return { 'ELU': elu, 'ELS': els }
+
+def calc_perda(t: float, resistente: bool) -> float:
+    if t == 0:
+        return 0.0
+    try:
+        return ((0.07 * math.log(t) + 0.0213) / 10) if resistente \
+            else ((0.2538 * math.log(t) + 0.0202) / 10)
+    except ValueError:
+        return 0.0
+
+def calculadora(p: dict) -> dict:
+    t0 = _executar(p)
+
+    perda = calc_perda(p['t'], p['resistente'])
+    p_corroido = {
+        **p,
+        'tw': p['tw'] - (2 * perda),
+        'tf': p['tf'] - (2 * perda),
+    }
+    tN = _executar(p_corroido)
+    delta             = t0['ELU'] - tN['ELU']
+    delta_porcentagem = (delta / t0['ELU']) * 100 if t0['ELU'] != 0 else 0.0
+
+    return { 't0': t0, 'tN': tN, 'delta': delta, 'delta_porcentagem': delta_porcentagem}
 
 
 if __name__ == '__main__':

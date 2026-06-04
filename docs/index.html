@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora CEBARC</title>
+    <!-- Pyodide CDN -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="number"], select { width: 100%; padding: 8px; box-sizing: border-box; }
+        .hidden { display: none !important; }
+        button { padding: 10px 15px; font-size: 16px; cursor: pointer; }
+        #resultado { margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 5px; white-space: pre-wrap; font-family: monospace; }
+        .loading { font-style: italic; color: #555; }
+        .radio-group { display: flex; gap: 15px; }
+        .radio-group label { display: inline-block; font-weight: normal; }
+        .checkbox-label { display: inline-block; font-weight: normal; }
+    </style>
+</head>
+<body>
+    <h1>Calculadora CEBARC</h1>
+    
+    <div id="status" class="loading">Carregando Pyodide... aguarde.</div>
+
+    <form id="calcForm" class="hidden">
+        <!-- Tempo de corrosão -->
+        <div class="form-group">
+            <label for="t">Tempo de corrosão (Anos)</label>
+            <input type="number" id="t" name="t" step="any" required>
+        </div>
+        
+        <!-- Perfil resistente a corrosão? -->
+        <div class="form-group">
+            <label class="checkbox-label">
+                <input type="checkbox" id="resistente" name="resistente" checked>
+                Perfil é resistente a corrosão?
+            </label>
+        </div>
+
+        <!-- Gama a1 e Gama a2 -->
+        <div class="form-group">
+            <label for="ya1">Gama a1</label>
+            <input type="number" id="ya1" name="ya1" step="any" value="1.1" required>
+        </div>
+        <div class="form-group">
+            <label for="ya2">Gama a2</label>
+            <input type="number" id="ya2" name="ya2" step="any" value="1.35" required>
+        </div>
+
+        <!-- Tensões -->
+        <div class="form-group">
+            <label for="fy">Tensão de Escoamento (KN/cm²)</label>
+            <input type="number" id="fy" name="fy" step="any" required>
+        </div>
+        <div class="form-group">
+            <label for="fu">Tensão última (KN/cm²)</label>
+            <input type="number" id="fu" name="fu" step="any" required>
+        </div>
+
+        <!-- Comprimento L -->
+        <div class="form-group">
+            <label for="L">Comprimento da Barra (cm)</label>
+            <input type="number" id="L" name="L" step="any" required>
+        </div>
+
+        <!-- Características da Ligação -->
+        <div class="form-group">
+            <label for="caracteristicasDeLigacao">Escolha a característica de ligação:</label>
+            <select id="caracteristicasDeLigacao" name="caracteristicasDeLigacao" required>
+                <option value="1">a - Descrição respectiva</option>
+                <option value="2">b - Descrição respectiva</option>
+                <option value="3">c - Descrição respectiva</option>
+                <option value="4">d - Descrição respectiva</option>
+                <option value="5">e - Descrição respectiva</option>
+                <option value="6">f - Descrição respectiva</option>
+            </select>
+        </div>
+
+        <!-- Grupo 4: Visível apenas se caracteristicasDeLigacao == 4 -->
+        <div id="groupLigacao4" class="hidden">
+            <div class="form-group">
+                <label for="Ac">Área da seção transversal dos elementos conectados (cm)</label>
+                <input type="number" id="Ac" name="Ac" step="any">
+            </div>
+            <div class="form-group">
+                <label for="b">Largura da chapa (cm)</label>
+                <input type="number" id="b" name="b" step="any">
+            </div>
+            <div class="form-group">
+                <label for="Lw">Comprimento dos cordões de solda (cm)</label>
+                <input type="number" id="Lw" name="Lw" step="any">
+            </div>
+            <div class="form-group">
+                <label for="DExt">Diâmetro externo da barra (cm)</label>
+                <input type="number" id="DExt" name="DExt" step="any">
+            </div>
+        </div>
+
+        <!-- Parafuso ou Solda -->
+        <div class="form-group">
+            <label>Ligação usa parafuso ou solda?</label>
+            <div class="radio-group">
+                <label><input type="radio" name="parafuso" value="true" checked> Parafuso</label>
+                <label><input type="radio" name="parafuso" value="false"> Solda</label>
+            </div>
+        </div>
+
+        <!-- Grupo Parafuso: Visível apenas se parafuso == true -->
+        <div id="groupParafuso">
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="broca" name="broca" checked>
+                    Usa broca?
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="dp">Diâmetro dos parafusos (cm)</label>
+                <input type="number" id="dp" name="dp" step="any">
+            </div>
+            <div class="form-group">
+                <label for="npa">Número de parafusos alinhados para análise</label>
+                <input type="number" id="npa" name="npa" step="any">
+            </div>
+            <div class="form-group">
+                <label for="nlpd">Número de linhas de parafusos em diagonal</label>
+                <input type="number" id="nlpd" name="nlpd" step="any">
+            </div>
+            <div class="form-group">
+                <label for="s">Espaçamento longitudinal dos parafusos (cm)</label>
+                <input type="number" id="s" name="s" step="any">
+            </div>
+            <div class="form-group">
+                <label for="g">Espaçamento transversal dos parafusos (cm)</label>
+                <input type="number" id="g" name="g" step="any">
+            </div>
+        </div>
+
+        <!-- Espessuras -->
+        <div class="form-group">
+            <label for="tw">Espessura da alma (cm)</label>
+            <input type="number" id="tw" name="tw" step="any" required>
+        </div>
+        <div class="form-group">
+            <label for="tf">Espessura da mesa (cm)</label>
+            <input type="number" id="tf" name="tf" step="any" required>
+        </div>
+
+        <!-- Alma ou Mesa -->
+        <div class="form-group">
+            <label>Ligação ocorre na alma ou mesa?</label>
+            <div class="radio-group">
+                <label><input type="radio" name="alma" value="true" checked> Alma</label>
+                <label><input type="radio" name="alma" value="false"> Mesa</label>
+            </div>
+        </div>
+
+        <!-- Propriedades adicionais -->
+        <div class="form-group">
+            <label for="bf">Largura da mesa (cm)</label>
+            <input type="number" id="bf" name="bf" step="any" required>
+        </div>
+        <div class="form-group">
+            <label for="h">Altura interna da alma (cm)</label>
+            <input type="number" id="h" name="h" step="any" required>
+        </div>
+        <div class="form-group">
+            <label for="lc">Comprimento efetivo da ligação na direção da força axial (cm)</label>
+            <input type="number" id="lc" name="lc" step="any" required>
+        </div>
+
+        <button type="submit" id="btnCalcular">Calcular</button>
+    </form>
+
+    <div id="resultado" class="hidden"></div>
+
+    <script>
+        let pyodideInstance = null;
+
+        // Lógica condicional de exibição (Características da Ligação)
+        const caracteristicasDeLigacao = document.getElementById('caracteristicasDeLigacao');
+        const groupLigacao4 = document.getElementById('groupLigacao4');
+        const req4 = ['Ac', 'b', 'Lw', 'DExt'];
+
+        caracteristicasDeLigacao.addEventListener('change', (e) => {
+            if (e.target.value === '4') {
+                groupLigacao4.classList.remove('hidden');
+                req4.forEach(id => document.getElementById(id).required = true);
+            } else {
+                groupLigacao4.classList.add('hidden');
+                req4.forEach(id => document.getElementById(id).required = false);
+            }
+        });
+
+        // Lógica condicional de exibição (Parafuso ou Solda)
+        const radiosParafuso = document.getElementsByName('parafuso');
+        const groupParafuso = document.getElementById('groupParafuso');
+        const reqParafuso = ['dp', 'npa', 'nlpd', 's', 'g'];
+
+        for (let radio of radiosParafuso) {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'true') {
+                    groupParafuso.classList.remove('hidden');
+                    reqParafuso.forEach(id => document.getElementById(id).required = true);
+                } else {
+                    groupParafuso.classList.add('hidden');
+                    reqParafuso.forEach(id => document.getElementById(id).required = false);
+                }
+            });
+        }
+        
+        // Estado inicial de obrigatoriedade dos campos
+        reqParafuso.forEach(id => document.getElementById(id).required = true);
+        
+        // Inicializar Pyodide e carregar algorithm.py
+        async function init() {
+            try {
+                let pyodide = await loadPyodide();
+                
+                // Buscar código do algorithm.py
+                const response = await fetch('algorithm.py');
+                if (!response.ok) {
+                    throw new Error("algorithm.py não encontrado. Status: " + response.status);
+                }
+                let algoCode = await response.text();
+                
+                // Executar o script Python para carregar as funções
+                // Substituímos o if __main__ para evitar que o Python tente ler do sys.stdin no navegador
+                algoCode = algoCode.replace("if __name__ == '__main__':", "if False:");
+                await pyodide.runPythonAsync(algoCode);
+                
+                pyodideInstance = pyodide;
+                document.getElementById('status').classList.add('hidden');
+                document.getElementById('calcForm').classList.remove('hidden');
+            } catch (err) {
+                document.getElementById('status').innerText = 'Erro ao carregar o Pyodide ou o script Python: ' + err.message;
+                console.error(err);
+            }
+        }
+
+        init();
+
+        // Submissão do formulário
+        document.getElementById('calcForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('btnCalcular');
+            btn.disabled = true;
+            btn.innerText = 'Calculando...';
+
+            const form = e.target;
+            
+            // Função auxiliar para capturar números ou null
+            const num = (id) => {
+                const val = form[id].value;
+                return val !== '' ? parseFloat(val) : null;
+            };
+
+            const isParafuso = form.elements['parafuso'].value === 'true';
+            const charLigacao = parseInt(form.elements['caracteristicasDeLigacao'].value);
+
+            // Montar objeto de parâmetros compatível com o IRespostas do wizard.ts
+            // Também adicionamos keys em minúsculo/maiúsculo como contorno (fallback) para possíveis
+            // keys no algorithm.py original que divergem do types.ts
+            const params = {
+                t: num('t'),
+                resistente: document.getElementById('resistente').checked,
+                ya1: num('ya1'),
+                ya2: num('ya2'),
+                fy: num('fy'),
+                fu: num('fu'),
+                L: num('L'),
+                caracteristicasDeLigacao: charLigacao,
+                Ac: charLigacao === 4 ? num('Ac') : null,
+                ac: charLigacao === 4 ? num('Ac') : null, // Fallback para algoritmo.py
+                b: charLigacao === 4 ? num('b') : null,
+                Lw: charLigacao === 4 ? num('Lw') : null,
+                DExt: charLigacao === 4 ? num('DExt') : null,
+                parafuso: isParafuso,
+                broca: isParafuso ? document.getElementById('broca').checked : null,
+                dp: isParafuso ? num('dp') : 0,
+                npa: isParafuso ? num('npa') : 0,
+                nlpd: isParafuso ? num('nlpd') : 0,
+                s: isParafuso ? num('s') : 0,
+                g: isParafuso ? num('g') : 0,
+                tw: num('tw'),
+                tf: num('tf'),
+                alma: form.elements['alma'].value === 'true',
+                bf: num('bf'),
+                h: num('h'),
+                lc: num('lc'),
+                Lc: num('lc') // Fallback para algoritmo.py
+            };
+
+            try {
+                // Passar parâmetros para o ambiente Python e executar
+                pyodideInstance.globals.set("js_params", params);
+                const pyResult = await pyodideInstance.runPythonAsync(`
+import js
+import json
+
+# Converter o objeto Proxy do Javascript para dicionário Python
+params_dict = js_params.to_py()
+
+# Chamar a calculadora do algorithm.py
+resultado = calculadora(params_dict)
+
+# Retornar como JSON string
+json.dumps(resultado)
+                `);
+
+                const result = JSON.parse(pyResult);
+                mostrarResultado(result, params.t);
+            } catch (err) {
+                console.error(err);
+                 alert('Erro no cálculo Python:\n' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Calcular';
+            }
+        });
+
+        // Função para formatar a saída de forma semelhante ao index.ts original
+        function mostrarResultado(res, tempo) {
+            const t0 = res.t0;
+            const tN = res.tN;
+            const div = document.getElementById('resultado');
+            div.classList.remove('hidden');
+
+            const linha = '─'.repeat(52);
+            let texto = "📊 Resultado:\n\n";
+            
+            texto += "   " + linha + "\n";
+            texto += "   Sem corrosão (t = 0)\n";
+            texto += "   " + linha + "\n";
+            texto += "   ELU:  " + t0.ELU.toFixed(2) + " kN\n";
+            texto += "   ELS:  " + t0.ELS.toFixed(2) + "\n";
+            if (t0.ELS > 300) texto += "  ⚠️  ELS excede o limite de 300.\n";
+
+            texto += "\n   " + linha + "\n";
+            texto += "   Com corrosão (t = " + tempo + " anos)\n";
+            texto += "   " + linha + "\n";
+            texto += "   ELU:  " + tN.ELU.toFixed(2) + " kN\n";
+            texto += "   ELS:  " + tN.ELS.toFixed(2) + "\n";
+            if (tN.ELS > 300) texto += "  ⚠️  ELS excede o limite de 300.\n";
+
+            texto += "\n   " + linha + "\n";
+            texto += "   Variação do ELU\n";
+            texto += "   " + linha + "\n";
+            texto += "   Δ  ELU:  " + res.delta.toFixed(2) + " kN\n";
+            texto += "   Δ% ELU:  " + res.delta_porcentagem.toFixed(2) + " %\n";
+
+            div.innerText = texto;
+        }
+    </script>
+</body>
+</html>

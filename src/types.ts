@@ -18,17 +18,12 @@ export interface IRespostas {
     Ac: number | null, // Área da seção transversal dos elementos conectados (cm)
     Lw: number | null, // Comprimento dos cordões de solda (não pode ser menor que b) (cm)
     b: number | null, // Largura da chapa (cm)
+    tc: number | null, // Espessura da chapa (cm)
+    hc: number | null, // Altura da chapa
     Dext: number | null, // Diâmetro externo da barra (cm)
     dp: number, // Diâmetro dos parafusos (cm)
     npa: number, // Número de parafusos alinhados para análise 
     nlpd: number, // Número de linhas de parafusos em diagonal
     s: number, // Espaçamento longitudinal dos parafusos (cm)
     g: number, // Espaçamento transversal dos parafusos (cm)
-}
-
-export type IParams = Omit<IRespostas, 't'> & Omit<IRespostas, 'resistente'>;
-
-export interface IResultado {
-    ELU: number, // FORÇA AXIAL RESISTENTE DE CÁLCULO - ELU
-    ELS: number, // VERIFICAÇÃO DA ESBELTEZ (deve ser <= 300)
 }
