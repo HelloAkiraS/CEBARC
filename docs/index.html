@@ -204,7 +204,6 @@
             font-weight: 400;
         }
 
-        input[type="number"],
         input[type="text"],
         select {
             width: 100%;
@@ -221,17 +220,11 @@
             transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
         }
 
-        input[type="number"]:focus,
         input[type="text"]:focus,
         select:focus {
             border-color: var(--rust);
             background: var(--surface);
             box-shadow: 0 0 0 3px rgba(181, 81, 26, 0.1);
-        }
-
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
         }
 
         select {
@@ -455,15 +448,83 @@
         #resultado {
             position: relative;
             z-index: 1;
-            font-family: var(--font-mono);
-            font-size: 0.8rem;
-            line-height: 1.75;
-            color: rgba(255, 255, 255, 0.88);
-            white-space: pre;
             background: rgba(0, 0, 0, 0.28);
             border: 1px solid rgba(255,255,255,0.08);
             border-left: 3px solid var(--rust);
-            padding: 1.25rem 1.125rem;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .res-block {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .res-header {
+            font-family: var(--font-heading);
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--rust);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding-bottom: 0.4rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .res-metric {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .res-metric-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .res-metric-value {
+            font-family: var(--font-mono);
+            font-size: 1.05rem;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .res-metric-unit {
+            font-family: var(--font-ui);
+            font-size: 0.75rem;
+            opacity: 0.6;
+            margin-left: 5px;
+        }
+
+        .res-alert {
+            background: rgba(181, 81, 26, 0.18);
+            border-left: 3px solid var(--rust);
+            padding: 0.6rem 0.8rem;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-top: -0.25rem;
+        }
+
+        .field-error {
+            border-color: var(--rust) !important;
+            box-shadow: 0 0 0 3px rgba(181, 81, 26, 0.15) !important;
+        }
+
+        .field-error-msg {
+            display: block;
+            font-size: 0.68rem;
+            color: var(--rust);
+            margin-top: 3px;
+            font-family: var(--font-ui);
+            font-weight: 500;
         }
 
         /* ─── RESPONSIVE ───────────────────────────────────────── */
@@ -524,7 +585,7 @@
 
                     <div class="form-group">
                         <label for="t">Tempo de corrosão <span class="unit">(anos)</span></label>
-                        <input type="number" id="t" name="t" step="any" required>
+                        <input type="text" inputmode="decimal" id="t" name="t" required>
                     </div>
                     <div class="form-group">
                         <label class="checkbox-label">
@@ -541,11 +602,11 @@
                     <div class="form-grid-2">
                         <div class="form-group">
                             <label for="ya1">γ<sub>a1</sub></label>
-                            <input type="number" id="ya1" name="ya1" step="any" value="1.1" required>
+                            <input type="text" inputmode="decimal" id="ya1" name="ya1" value="1.1" required>
                         </div>
                         <div class="form-group">
                             <label for="ya2">γ<sub>a2</sub></label>
-                            <input type="number" id="ya2" name="ya2" step="any" value="1.35" required>
+                            <input type="text" inputmode="decimal" id="ya2" name="ya2" value="1.35" required>
                         </div>
                     </div>
                 </div>
@@ -557,11 +618,11 @@
                     <div class="form-grid-2">
                         <div class="form-group">
                             <label for="fy">Tensão de escoamento f<sub>y</sub> <span class="unit">(kN/cm²)</span></label>
-                            <input type="number" id="fy" name="fy" step="any" required>
+                            <input type="text" inputmode="decimal" id="fy" name="fy" required>
                         </div>
                         <div class="form-group">
                             <label for="fu">Tensão última f<sub>u</sub> <span class="unit">(kN/cm²)</span></label>
-                            <input type="number" id="fu" name="fu" step="any" required>
+                            <input type="text" inputmode="decimal" id="fu" name="fu" required>
                         </div>
                     </div>
                 </div>
@@ -572,30 +633,30 @@
 
                     <div class="form-group">
                         <label for="L">Comprimento da barra <span class="unit">(cm)</span></label>
-                        <input type="number" id="L" name="L" step="any" required>
+                        <input type="text" inputmode="decimal" id="L" name="L" required>
                     </div>
                     <div class="form-grid-2">
                         <div class="form-group">
                             <label for="tw">Espessura da alma t<sub>w</sub> <span class="unit">(cm)</span></label>
-                            <input type="number" id="tw" name="tw" step="any" required>
+                            <input type="text" inputmode="decimal" id="tw" name="tw" required>
                         </div>
                         <div class="form-group">
                             <label for="tf">Espessura da mesa t<sub>f</sub> <span class="unit">(cm)</span></label>
-                            <input type="number" id="tf" name="tf" step="any" required>
+                            <input type="text" inputmode="decimal" id="tf" name="tf" required>
                         </div>
                     </div>
                     <div class="form-grid-3">
                         <div class="form-group">
                             <label for="bf">Largura da mesa b<sub>f</sub> <span class="unit">(cm)</span></label>
-                            <input type="number" id="bf" name="bf" step="any" required>
+                            <input type="text" inputmode="decimal" id="bf" name="bf" required>
                         </div>
                         <div class="form-group">
                             <label for="h">Altura interna da alma h <span class="unit">(cm)</span></label>
-                            <input type="number" id="h" name="h" step="any" required>
+                            <input type="text" inputmode="decimal" id="h" name="h" required>
                         </div>
                         <div class="form-group">
                             <label for="lc">Comp. efetivo ligação l<sub>c</sub> <span class="unit">(cm)</span></label>
-                            <input type="number" id="lc" name="lc" step="any" required>
+                            <input type="text" inputmode="decimal" id="lc" name="lc" required>
                         </div>
                     </div>
                 </div>
@@ -622,21 +683,21 @@
                             <div class="form-grid-2">
                                 <div class="form-group">
                                     <label for="Ac">Área elem. conectados A<sub>c</sub> <span class="unit">(cm²)</span></label>
-                                    <input type="number" id="Ac" name="Ac" step="any">
+                                    <input type="text" inputmode="decimal" id="Ac" name="Ac">
                                 </div>
                                 <div class="form-group">
                                     <label for="b">Largura da chapa b <span class="unit">(cm)</span></label>
-                                    <input type="number" id="b" name="b" step="any">
+                                    <input type="text" inputmode="decimal" id="b" name="b">
                                 </div>
                             </div>
                             <div class="form-grid-2">
                                 <div class="form-group">
                                     <label for="Lw">Comp. cordões de solda L<sub>w</sub> <span class="unit">(cm)</span></label>
-                                    <input type="number" id="Lw" name="Lw" step="any">
+                                    <input type="text" inputmode="decimal" id="Lw" name="Lw">
                                 </div>
                                 <div class="form-group">
                                     <label for="DExt">Diâmetro externo D<sub>ext</sub> <span class="unit">(cm)</span></label>
-                                    <input type="number" id="DExt" name="DExt" step="any">
+                                    <input type="text" inputmode="decimal" id="DExt" name="DExt">
                                 </div>
                             </div>
                         </div>
@@ -667,25 +728,25 @@
                             <div class="form-grid-2">
                                 <div class="form-group">
                                     <label for="dp">Diâmetro dos parafusos d<sub>p</sub> <span class="unit">(cm)</span></label>
-                                    <input type="number" id="dp" name="dp" step="any">
+                                    <input type="text" inputmode="decimal" id="dp" name="dp">
                                 </div>
                                 <div class="form-group">
                                     <label for="npa">N.º parafusos alinhados n<sub>pa</sub></label>
-                                    <input type="number" id="npa" name="npa" step="any">
+                                    <input type="text" inputmode="decimal" id="npa" name="npa">
                                 </div>
                             </div>
                             <div class="form-grid-3">
                                 <div class="form-group">
                                     <label for="nlpd">Linhas em diagonal n<sub>lpd</sub></label>
-                                    <input type="number" id="nlpd" name="nlpd" step="any">
+                                    <input type="text" inputmode="decimal" id="nlpd" name="nlpd">
                                 </div>
                                 <div class="form-group">
                                     <label for="s">Esp. longitudinal s <span class="unit">(cm)</span></label>
-                                    <input type="number" id="s" name="s" step="any">
+                                    <input type="text" inputmode="decimal" id="s" name="s">
                                 </div>
                                 <div class="form-group">
                                     <label for="g">Esp. transversal g <span class="unit">(cm)</span></label>
-                                    <input type="number" id="g" name="g" step="any">
+                                    <input type="text" inputmode="decimal" id="g" name="g">
                                 </div>
                             </div>
                         </div>
@@ -811,19 +872,114 @@
 
     init();
 
+    function normalizeDecimal(val) {
+        return String(val).replace(',', '.').trim();
+    }
+
+    document.getElementById('calcForm').addEventListener('blur', (e) => {
+        if (e.target.matches('input[type="text"]') && e.target.value.includes(',')) {
+            e.target.value = normalizeDecimal(e.target.value);
+        }
+    }, true);
+
+    // Limpar erros no evento input
+    document.getElementById('calcForm').addEventListener('input', (e) => {
+        const input = e.target;
+        if (input && input.classList && input.classList.contains('field-error')) {
+            input.classList.remove('field-error');
+            const next = input.nextElementSibling;
+            if (next && next.classList.contains('field-error-msg')) {
+                next.remove();
+            }
+        }
+    });
+
     // Submissão do formulário
     document.getElementById('calcForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        const form = e.target;
+
+        // Regras de validação
+        const fieldRules = {
+            't':    { label: 'Tempo de corrosão', canBeZero: false },
+            'ya1':  { label: 'γa1', canBeZero: false },
+            'ya2':  { label: 'γa2', canBeZero: false },
+            'fy':   { label: 'Tensão de escoamento (fy)', canBeZero: false },
+            'fu':   { label: 'Tensão última (fu)', canBeZero: false },
+            'L':    { label: 'Comprimento da barra', canBeZero: false },
+            'tw':   { label: 'Espessura da alma (tw)', canBeZero: false },
+            'tf':   { label: 'Espessura da mesa (tf)', canBeZero: false },
+            'bf':   { label: 'Largura da mesa (bf)', canBeZero: false },
+            'h':    { label: 'Altura interna da alma (h)', canBeZero: false },
+            'lc':   { label: 'Comp. efetivo ligação (lc)', canBeZero: false },
+            'Ac':   { label: 'Área elem. conectados (Ac)', canBeZero: false },
+            'b':    { label: 'Largura da chapa (b)', canBeZero: false },
+            'Lw':   { label: 'Comp. cordões de solda (Lw)', canBeZero: false },
+            'DExt': { label: 'Diâmetro externo (DExt)', canBeZero: false },
+            'dp':   { label: 'Diâmetro dos parafusos (dp)', canBeZero: false },
+            'npa':  { label: 'N.º parafusos alinhados (npa)', canBeZero: false },
+            'nlpd': { label: 'Linhas em diagonal (nlpd)', canBeZero: true },
+            's':    { label: 'Esp. longitudinal (s)', canBeZero: true },
+            'g':    { label: 'Esp. transversal (g)', canBeZero: true }
+        };
+
+        let hasError = false;
+        let errorMessages = [];
+
+        Object.keys(fieldRules).forEach(id => {
+            const input = document.getElementById(id);
+            if (!input) return;
+
+            // Pula validação se estiver dentro de um grupo oculto
+            if (input.closest('.hidden')) return;
+
+            const rule = fieldRules[id];
+            const valStr = input.value;
+            let msg = '';
+
+            if (valStr.trim() === '') {
+                msg = 'valor obrigatório';
+            } else {
+                const valNum = parseFloat(normalizeDecimal(valStr));
+                if (valNum < 0) {
+                    msg = 'não pode ser negativo';
+                } else if (valNum === 0 && !rule.canBeZero) {
+                    msg = 'não pode ser zero';
+                }
+            }
+
+            if (msg) {
+                hasError = true;
+                errorMessages.push(`• ${rule.label}: ${msg}`);
+                
+                input.classList.add('field-error');
+                let next = input.nextElementSibling;
+                const inlineMsg = msg.charAt(0).toUpperCase() + msg.slice(1);
+                
+                if (!next || !next.classList.contains('field-error-msg')) {
+                    const span = document.createElement('span');
+                    span.className = 'field-error-msg';
+                    span.innerText = inlineMsg;
+                    input.parentNode.insertBefore(span, input.nextSibling);
+                } else {
+                    next.innerText = inlineMsg;
+                }
+            }
+        });
+
+        if (hasError) {
+            alert("Corrija os seguintes campos antes de calcular:\n" + errorMessages.join('\n'));
+            return;
+        }
 
         const btn = document.getElementById('btnCalcular');
         btn.disabled = true;
         btn.innerText = 'Calculando...';
 
-        const form = e.target;
-
         // Função auxiliar para capturar números ou null
         const num = (id) => {
-            const val = form[id].value;
+            const val = normalizeDecimal(form[id].value);
             return val !== '' ? parseFloat(val) : null;
         };
 
@@ -891,37 +1047,65 @@ json.dumps(resultado)
         }
     });
 
-    // Função para formatar a saída de forma semelhante ao index.ts original
+    // Função para renderizar a saída estruturada
     function mostrarResultado(res, tempo) {
         const t0 = res.t0;
         const tN = res.tN;
         const div = document.getElementById('resultado');
         div.classList.remove('hidden');
 
-        const linha = '─'.repeat(52);
-        let texto = "📊 Resultado:\n\n";
+        const renderAlert = (elsValue) => {
+            if (elsValue >= 300) {
+                return `
+                <div class="res-alert">
+                    <span style="font-size: 1.1rem; line-height: 1;">⚠️</span>
+                    <span>Atenção: este resultado está muito alto.</span>
+                </div>`;
+            }
+            return '';
+        };
 
-        texto += "   " + linha + "\n";
-        texto += "   Sem corrosão (t = 0)\n";
-        texto += "   " + linha + "\n";
-        texto += "   ELU:  " + t0.ELU.toFixed(2) + " kN\n";
-        texto += "   ELS:  " + t0.ELS.toFixed(2) + "\n";
-        if (t0.ELS > 300) texto += "  ⚠️  ELS excede o limite de 300.\n";
+        const html = `
+            <div class="res-block">
+                <div class="res-header">Sem corrosão (t = 0)</div>
+                <div class="res-metric">
+                    <span class="res-metric-label">ELU</span>
+                    <span class="res-metric-value">${t0.ELU.toFixed(2)}<span class="res-metric-unit">kN</span></span>
+                </div>
+                <div class="res-metric">
+                    <span class="res-metric-label">ELS</span>
+                    <span class="res-metric-value">${t0.ELS.toFixed(2)}</span>
+                </div>
+                ${renderAlert(t0.ELS)}
+            </div>
 
-        texto += "\n   " + linha + "\n";
-        texto += "   Com corrosão (t = " + tempo + " anos)\n";
-        texto += "   " + linha + "\n";
-        texto += "   ELU:  " + tN.ELU.toFixed(2) + " kN\n";
-        texto += "   ELS:  " + tN.ELS.toFixed(2) + "\n";
-        if (tN.ELS > 300) texto += "  ⚠️  ELS excede o limite de 300.\n";
+            <div class="res-block">
+                <div class="res-header">Com corrosão (t = ${tempo} anos)</div>
+                <div class="res-metric">
+                    <span class="res-metric-label">ELU</span>
+                    <span class="res-metric-value">${tN.ELU.toFixed(2)}<span class="res-metric-unit">kN</span></span>
+                </div>
+                <div class="res-metric">
+                    <span class="res-metric-label">ELS</span>
+                    <span class="res-metric-value">${tN.ELS.toFixed(2)}</span>
+                </div>
+                ${renderAlert(tN.ELS)}
+            </div>
 
-        texto += "\n   " + linha + "\n";
-        texto += "   Variação do ELU\n";
-        texto += "   " + linha + "\n";
-        texto += "   Δ  ELU:  " + res.delta.toFixed(2) + " kN\n";
-        texto += "   Δ% ELU:  " + res.delta_porcentagem.toFixed(2) + " %\n";
+            <div class="res-block">
+                <div class="res-header">Variação do ELU</div>
+                <div class="res-metric">
+                    <span class="res-metric-label">Δ ELU</span>
+                    <span class="res-metric-value">${res.delta.toFixed(2)}<span class="res-metric-unit">kN</span></span>
+                </div>
+                <div class="res-metric">
+                    <span class="res-metric-label">Δ% ELU</span>
+                    <span class="res-metric-value">${res.delta_porcentagem.toFixed(2)}<span class="res-metric-unit">%</span></span>
+                </div>
+            </div>
+        `;
 
-        div.innerText = texto;
+        div.innerHTML = html;
     }
 </script>
 
