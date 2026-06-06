@@ -4,8 +4,7 @@ import { validarNumeroPositivo, validarNumeroNaoNegativo } from '../src/function
 
 export async function executarWizard(): Promise<IRespostas> {
    
-    let altb: number = 0;
-    let tipoLigacao: number = 0;
+
     let usaParafuso: boolean = true;
 
     console.log("\n👷 Bem-vindo à Calculadora! 👷\n")
@@ -64,85 +63,7 @@ export async function executarWizard(): Promise<IRespostas> {
             validate: validarNumeroPositivo,
             format: input => Number(input.replace(',','.'))
         },
-        {
-            type: 'select',
-            name: 'caracteristicasDeLigacao',
-            message: 'Escolha a característica de ligação:',
-            choices: [
-                {
-                    title: 'a',
-                    value: 1,
-                    description: 'Descrição respectiva'
-                },
-                {
-                    title: 'b',
-                    value: 2,
-                    description: 'Descrição respectiva'
-                },
-                {
-                    title: 'c',
-                    value: 3,
-                    description: 'Descrição respectiva'
-                },
-                {
-                    title: 'd',
-                    value: 4,
-                    description: 'Descrição respectiva'
-                },
-                {
-                    title: 'e',
-                    value: 5,
-                    description: 'Descrição respectiva'
-                },
-                {
-                    title: 'f',
-                    value: 6,
-                    description: 'Descrição respectiva'
-                }
-            ],
-            hint: '- Use as setas para navegar e Enter para confirmar',
-            onState: state => { if(state.value !== undefined) tipoLigacao = state.value }
-        },
-        {
-            type: () => tipoLigacao === 4 ? 'text' : null,
-            name: 'Ac',
-            message: 'Área da seção transversal dos elementos conectados (cm)',
-            validate: validarNumeroPositivo,
-            format: input => Number(input.replace(',','.'))
-        },
-        {
-            type: () => tipoLigacao === 4 ? 'text' : null,
-            name: 'b',
-            message: 'Largura da chapa (cm)',
-            validate: validarNumeroPositivo,
-            format: input => Number(input.replace(',', '.')),
-            onState: (state) => { if (state.value !== undefined) altb = Number(state.value.toString().replace(',', '.')) }
-        },
-        {
-            type: () => tipoLigacao === 4 ? 'text' : null,
-            name: 'Lw',
-            message: 'Comprimento dos cordões de solda (cm)',
-            validate: (lw) => {
-                const lwNumerico = Number(lw.replace(',', '.'));
 
-                if (isNaN(lwNumerico) || lw.trim() === '') {
-                    return 'Por favor, insira um valor numérico válido.';
-                }
-                if (lwNumerico < altb) {
-                    return `Erro: O comprimento (Lw) não pode ser menor que o valor de b (${altb} cm).`;
-                }
-
-                return true;
-            },
-            format: input => Number(input.replace(',', '.'))
-        },
-        {
-            type: () => tipoLigacao === 4 ? 'text' : null,
-            name: 'DExt',
-            message: 'Diâmetro externo da barra (cm)',
-            validate: validarNumeroPositivo,
-            format: input => Number(input.replace(',','.')) 
-        },
         {
             type: 'toggle',
             name: 'parafuso',

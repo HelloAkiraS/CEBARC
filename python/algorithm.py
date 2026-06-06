@@ -68,26 +68,7 @@ def calc_an(p: dict, ag: float) -> float:
 
 
 def calc_ct(p: dict, ag: float, ec: float) -> float:
-    caso = p['caracteristicasDeLigacao']
-
-    if caso == 1:
-        return 1.0
-
-    if caso == 2:
-        return p['ac'] / ag
-
-    if caso == 3:
-        return 1 - (ec / p['lc'])
-
-    if caso == 4:
-        numerador = 3 * (p['lc'] ** 2)
-        denominador = numerador + (p['b'] ** 2)
-        return (numerador / denominador) * (1 - (p['t'] / 2 * p['Lc']))
-
-    if caso in (5, 6):
-        return (1 + ((p['ec'] / p['lc']) ** (3.2))) ** (-10)
-
-    return 0.0
+    return 1 - (ec / p['lc'])
 
 
 def calc_els(L: float, r: float) -> float:

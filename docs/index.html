@@ -661,48 +661,7 @@
                     </div>
                 </div>
 
-                <!-- CARD 5 — Características da Ligação -->
-                <div class="card">
-                    <div class="card-title">Características da Ligação <span class="card-num">05</span></div>
 
-                    <div class="form-group">
-                        <label for="caracteristicasDeLigacao">Caso da ligação</label>
-                        <select id="caracteristicasDeLigacao" name="caracteristicasDeLigacao" required>
-                            <option value="1">a — Descrição respectiva</option>
-                            <option value="2">b — Descrição respectiva</option>
-                            <option value="3">c — Descrição respectiva</option>
-                            <option value="4">d — Descrição respectiva</option>
-                            <option value="5">e — Descrição respectiva</option>
-                            <option value="6">f — Descrição respectiva</option>
-                        </select>
-                    </div>
-
-                    <!-- Visible only when case == 4 -->
-                    <div id="groupLigacao4" class="hidden">
-                        <div class="conditional-group">
-                            <div class="form-grid-2">
-                                <div class="form-group">
-                                    <label for="Ac">Área elem. conectados A<sub>c</sub> <span class="unit">(cm²)</span></label>
-                                    <input type="text" inputmode="decimal" id="Ac" name="Ac">
-                                </div>
-                                <div class="form-group">
-                                    <label for="b">Largura da chapa b <span class="unit">(cm)</span></label>
-                                    <input type="text" inputmode="decimal" id="b" name="b">
-                                </div>
-                            </div>
-                            <div class="form-grid-2">
-                                <div class="form-group">
-                                    <label for="Lw">Comp. cordões de solda L<sub>w</sub> <span class="unit">(cm)</span></label>
-                                    <input type="text" inputmode="decimal" id="Lw" name="Lw">
-                                </div>
-                                <div class="form-group">
-                                    <label for="DExt">Diâmetro externo D<sub>ext</sub> <span class="unit">(cm)</span></label>
-                                    <input type="text" inputmode="decimal" id="DExt" name="DExt">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- CARD 6 — Tipo de Ligação -->
                 <div class="card">
@@ -809,20 +768,7 @@
 <script>
     let pyodideInstance = null;
 
-    // Lógica condicional de exibição (Características da Ligação)
-    const caracteristicasDeLigacao = document.getElementById('caracteristicasDeLigacao');
-    const groupLigacao4 = document.getElementById('groupLigacao4');
-    const req4 = ['Ac', 'b', 'Lw', 'DExt'];
 
-    caracteristicasDeLigacao.addEventListener('change', (e) => {
-        if (e.target.value === '4') {
-            groupLigacao4.classList.remove('hidden');
-            req4.forEach(id => document.getElementById(id).required = true);
-        } else {
-            groupLigacao4.classList.add('hidden');
-            req4.forEach(id => document.getElementById(id).required = false);
-        }
-    });
 
     // Lógica condicional de exibição (Parafuso ou Solda)
     const radiosParafuso = document.getElementsByName('parafuso');
@@ -913,10 +859,7 @@
             'bf':   { label: 'Largura da mesa (bf)', canBeZero: false },
             'h':    { label: 'Altura interna da alma (h)', canBeZero: false },
             'lc':   { label: 'Comp. efetivo ligação (lc)', canBeZero: false },
-            'Ac':   { label: 'Área elem. conectados (Ac)', canBeZero: false },
-            'b':    { label: 'Largura da chapa (b)', canBeZero: false },
-            'Lw':   { label: 'Comp. cordões de solda (Lw)', canBeZero: false },
-            'DExt': { label: 'Diâmetro externo (DExt)', canBeZero: false },
+
             'dp':   { label: 'Diâmetro dos parafusos (dp)', canBeZero: false },
             'npa':  { label: 'N.º parafusos alinhados (npa)', canBeZero: false },
             'nlpd': { label: 'Linhas em diagonal (nlpd)', canBeZero: true },
@@ -984,7 +927,6 @@
         };
 
         const isParafuso = form.elements['parafuso'].value === 'true';
-        const charLigacao = parseInt(form.elements['caracteristicasDeLigacao'].value);
 
         // Montar objeto de parâmetros compatível com o IRespostas do wizard.ts
         // Também adicionamos keys em minúsculo/maiúsculo como contorno (fallback) para possíveis
@@ -997,12 +939,7 @@
             fy: num('fy'),
             fu: num('fu'),
             L: num('L'),
-            caracteristicasDeLigacao: charLigacao,
-            Ac: charLigacao === 4 ? num('Ac') : null,
-            ac: charLigacao === 4 ? num('Ac') : null, // Fallback para algoritmo.py
-            b: charLigacao === 4 ? num('b') : null,
-            Lw: charLigacao === 4 ? num('Lw') : null,
-            DExt: charLigacao === 4 ? num('DExt') : null,
+            caracteristicasDeLigacao: 3,
             parafuso: isParafuso,
             broca: isParafuso ? document.getElementById('broca').checked : null,
             dp: isParafuso ? num('dp') : 0,
