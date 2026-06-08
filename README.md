@@ -1,4 +1,5 @@
 # CEBARC – Corrosion Effects on Steel Member Strength
+[![DOI](https://zenodo.org/badge/1258786047.svg)](https://doi.org/10.5281/zenodo.20599937)
 
 Calculate how atmospheric corrosion reduces the tensile resistance of steel I-shaped profiles over time.
 
