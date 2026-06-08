@@ -1,0 +1,22 @@
+{
+    "t": 10,
+    "resistente": false,
+    "ya1": 1.1,
+    "ya2": 1.35,
+    "fy": 25.0,
+    "fu": 40.0,
+    "L": 300,
+    "parafuso": true,
+    "broca": true,
+    "alma": true,
+    "tw": 1.0,
+    "tf": 1.5,
+    "bf": 15.0,
+    "h": 30.0,
+    "lc": 10.0,
+    "dp": 1.6,
+    "npa": 2,
+    "nlpd": 0,
+    "s": 0,
+    "g": 0
+}

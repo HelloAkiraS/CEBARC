@@ -32,3 +32,17 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Finder (MacOS) folder config
 .DS_Store
+
+# Resultados de análises reais (gerados em runtime)
+results/
+*.json
+!examples/*.json
+!package.json
+!tsconfig.json
+!bun.lock
+
+# Runtime
+__pycache__/
+*.pyc
+Thumbs.db
+cebarc.exe

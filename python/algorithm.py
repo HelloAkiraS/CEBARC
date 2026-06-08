@@ -88,7 +88,19 @@ def _executar(p: dict) -> dict:
     elu  = min(esb, rsle)
     els  = calc_els(p['L'], r)
 
-    return { 'ELU': elu, 'ELS': els }
+    return {
+        'ELU': elu,
+        'ELS': els,
+        'intermediaries': {
+            'ag': ag,
+            'ly': ly,
+            'r': r,
+            'ec': ec,
+            'ae': ae,
+            'esb': esb,
+            'rsle': rsle
+        }
+    }
 
 def calc_perda(t: float, resistente: bool) -> float:
     if t == 0:

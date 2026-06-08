@@ -1,0 +1,5 @@
+# CEBARC — Python dependencies
+# No external packages required — stdlib only
+# Tested and developed with Python 3.10+
+# Minimum supported: Python 3.8
+# To run: python3 algorithm.py <input.json>

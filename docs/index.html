@@ -539,7 +539,8 @@
                 padding: 1.25rem;
             }
             .panel-result {
-                min-height: 300px;
+                height: fit-content;
+                min-height: 450px;
                 border-top: 3px solid var(--rust);
             }
             .app-header .subtitle,
@@ -553,6 +554,111 @@
             .form-grid-2,
             .form-grid-3 { grid-template-columns: 1fr; }
         }
+        /* ─── NEW FEATURES (EXPORT & DETAILED RESULTS) ─────────── */
+        
+        /* Export Button in Header */
+        .btn-export {
+            margin-left: auto; /* Push to the right */
+            background: transparent;
+            color: var(--rust);
+            border: 1px solid var(--rust-border);
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 4px 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: none; /* Hidden until results exist */
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-export:hover {
+            background: var(--rust);
+            color: #fff;
+            box-shadow: 0 0 8px rgba(208, 101, 42, 0.4);
+        }
+        .btn-export::before {
+            content: '↓';
+            font-weight: bold;
+        }
+
+        /* Toggle Details Button */
+        .btn-details {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.15);
+            border: 1px dashed rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.6);
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.75rem;
+            margin-top: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-details:hover {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            border-color: rgba(255,255,255,0.3);
+        }
+        .btn-details.active {
+            border-style: solid;
+            border-color: var(--rust-mid);
+            color: var(--rust-mid);
+        }
+
+        /* Detailed Readout Accordion */
+        .detailed-readout {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0, 1, 0, 1);
+            background: #121c26; /* Darker than navy for depth */
+            border-left: 3px solid var(--steel);
+            margin-top: 0;
+        }
+        .detailed-readout.open {
+            max-height: 2000px;
+            transition: max-height 0.5s ease-in-out;
+            margin-top: 0.5rem;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-left: 3px solid var(--rust-mid);
+            padding: 1.25rem;
+        }
+
+        .readout-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        @media (max-width: 600px) {
+            .readout-grid { grid-template-columns: 1fr; }
+        }
+
+        .readout-col-header {
+            font-family: var(--font-heading);
+            font-size: 0.75rem;
+            color: var(--muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            border-bottom: 1px dotted rgba(255,255,255,0.1);
+            padding-bottom: 0.4rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .readout-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.3rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+        }
+        .readout-label { color: rgba(255,255,255,0.4); }
+        .readout-val { color: #fff; font-weight: 500; }
     </style>
 </head>
 <body>
@@ -564,8 +670,7 @@
         <div class="brand">CEB<em>ARC</em></div>
         <div class="header-sep"></div>
         <div class="subtitle">
-            Análise da Perda de Resistência em Barras Tracionadas Axialmente<br>
-            Corrosão por Perda de Seção Transversal
+            Cálculo de Esforços em Barras com Corrosão
         </div>
         <div class="header-badge">PYODIDE&nbsp;0.25 &nbsp;·&nbsp; ABNT&nbsp;NBR&nbsp;8800</div>
     </header>
@@ -737,7 +842,10 @@
         <!-- ── RIGHT: RESULTS ──────────────────────────────────── -->
         <section class="panel-result">
 
-            <div class="panel-result-header">Output</div>
+            <div class="panel-result-header">
+                <span>Output</span>
+                <button id="btnExport" class="btn-export" onclick="exportarResultados()">Exportar JSON</button>
+            </div>
 
             <div class="result-panel-body">
 
@@ -768,6 +876,32 @@
 <!-- ═══ ORIGINAL JAVASCRIPT (não alterado) ════════════════════ -->
 <script>
     let pyodideInstance = null;
+    let ultimoResultado = null;
+
+    function exportarResultados() {
+        if (!ultimoResultado) return;
+        const blob = new Blob([JSON.stringify(ultimoResultado, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cebarc_resultado_${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function toggleDetalhes() {
+        const btn = document.getElementById('btnDetails');
+        const painel = document.getElementById('detailedPane');
+        if (painel.classList.contains('open')) {
+            painel.classList.remove('open');
+            btn.classList.remove('active');
+            btn.innerText = 'Ver Detalhes [+]';
+        } else {
+            painel.classList.add('open');
+            btn.classList.add('active');
+            btn.innerText = 'Ocultar Detalhes [-]';
+        }
+    }
 
 
 
@@ -975,7 +1109,7 @@ json.dumps(resultado)
             `);
 
             const result = JSON.parse(pyResult);
-            mostrarResultado(result, params.t);
+            mostrarResultado(result, params);
         } catch (err) {
             console.error(err);
             alert('Erro no cálculo Python:\n' + err.message);
@@ -986,11 +1120,41 @@ json.dumps(resultado)
     });
 
     // Função para renderizar a saída estruturada
-    function mostrarResultado(res, tempo) {
+    function mostrarResultado(res, paramsObj) {
+        const tempo = paramsObj.t;
         const t0 = res.t0;
         const tN = res.tN;
         const div = document.getElementById('resultado');
         div.classList.remove('hidden');
+
+        // Exibir o botão de exportação no Header
+        document.getElementById('btnExport').style.display = 'flex';
+
+        // Estruturar o objeto JSON completo
+        ultimoResultado = {
+            metadata: {
+                timestamp: new Date().toISOString(),
+                environment: "Pyodide Web"
+            },
+            input: paramsObj,
+            summary: {
+                delta: res.delta,
+                delta_percent: res.delta_porcentagem,
+                verdict: res.delta > 0 ? "resistência reduzida" : "sem perda"
+            },
+            detailed: {
+                without_corrosion: {
+                    ELU: t0.ELU,
+                    ELS: t0.ELS,
+                    intermediaries: t0.intermediaries
+                },
+                with_corrosion: {
+                    ELU: tN.ELU,
+                    ELS: tN.ELS,
+                    intermediaries: tN.intermediaries
+                }
+            }
+        };
 
         const renderAlert = (elsValue) => {
             if (elsValue >= 300) {
@@ -1001,6 +1165,16 @@ json.dumps(resultado)
                 </div>`;
             }
             return '';
+        };
+
+        const renderIntermediaries = (interm) => {
+            if (!interm) return '';
+            return Object.entries(interm).map(([key, val]) => `
+                <div class="readout-item">
+                    <span class="readout-label">${key.toUpperCase()}</span>
+                    <span class="readout-val">${Number(val).toFixed(4)}</span>
+                </div>
+            `).join('');
         };
 
         const html = `
@@ -1039,6 +1213,20 @@ json.dumps(resultado)
                 <div class="res-metric">
                     <span class="res-metric-label">Δ% ELU</span>
                     <span class="res-metric-value">${res.delta_porcentagem.toFixed(2)}<span class="res-metric-unit">%</span></span>
+                </div>
+            </div>
+            
+            <button id="btnDetails" class="btn-details" onclick="toggleDetalhes()">Ver Detalhes [+]</button>
+            <div id="detailedPane" class="detailed-readout">
+                <div class="readout-grid">
+                    <div>
+                        <div class="readout-col-header">INTERMEDIÁRIOS (T=0)</div>
+                        ${renderIntermediaries(t0.intermediaries)}
+                    </div>
+                    <div>
+                        <div class="readout-col-header">INTERMEDIÁRIOS (T=${tempo})</div>
+                        ${renderIntermediaries(tN.intermediaries)}
+                    </div>
                 </div>
             </div>
         `;
